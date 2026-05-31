@@ -566,7 +566,8 @@ public class GlobalResourceLoader : MonoBehaviour
 
             // Process folders upward from processingAbsoluteFolder.
             while (processingAbsoluteFolder != Paths
-                .GetTrackRootFolder(streamingAssets: true))
+                .GetTrackRootFolder(streamingAssets: true)
+                && !string.IsNullOrEmpty(processingRelativeFolder))
             {
                 string processingRelativeParentFolder = Path
                     .GetDirectoryName(processingRelativeFolder);
@@ -982,7 +983,8 @@ public class GlobalResourceLoader : MonoBehaviour
 
             // Process folders upward from processingAbsoluteFolder.
             while (processingAbsoluteFolder != Paths
-                .GetSetlistRootFolder(streamingAssets: true))
+                .GetSetlistRootFolder(streamingAssets: true)
+                && !string.IsNullOrEmpty(processingRelativeFolder))
             {
                 string processingRelativeParentFolder = Path
                     .GetDirectoryName(processingRelativeFolder);
