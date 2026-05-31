@@ -195,12 +195,12 @@ public class HoldTrailElements
 
         if (ongoingTrailSprite != null)
         {
-            ongoingTrail.style.backgroundImage = new StyleBackground(
+            ongoingTrail.SetBackgroundSpriteIfChanged(
                 ongoingTrailSprite);
         }
-        durationTrail.style.backgroundImage = new StyleBackground(
+        durationTrail.SetBackgroundSpriteIfChanged(
             durationTrailSprite);
-        durationTrailEnd.style.backgroundImage = new StyleBackground(
+        durationTrailEnd.SetBackgroundSpriteIfChanged(
             durationTrailEndSprite);
     }
 }

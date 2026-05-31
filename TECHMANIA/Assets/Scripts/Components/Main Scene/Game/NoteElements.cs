@@ -527,8 +527,8 @@ public class NoteElements : INoteHolder
             return;
         }
 
-        feverOverlay.style.backgroundImage = new
-            StyleBackground(GlobalResource.vfxSkin.feverOverlay
+        feverOverlay.SetBackgroundSpriteIfChanged(
+            GlobalResource.vfxSkin.feverOverlay
             .GetSpriteForTime(time, loop: true));
         float alpha = Mathf.Min(1f, scoreKeeper.feverAmount * 6f);
         alpha *= feverOverlayAlphaUpperBound;
@@ -551,7 +551,7 @@ public class NoteElements : INoteHolder
 
         float t = Mathf.InverseLerp(kOverlayStart, kOverlayEnd, 
             distance);
-        approachOverlay.style.backgroundImage = new StyleBackground(
+        approachOverlay.SetBackgroundSpriteIfChanged(
             GlobalResource.gameUiSkin.approachOverlay
             .GetSpriteAtFloatIndex(t));
         approachOverlay.style.opacity = approachOverlayAlphaUpperBound;

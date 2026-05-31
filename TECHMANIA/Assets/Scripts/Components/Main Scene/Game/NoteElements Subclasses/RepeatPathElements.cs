@@ -176,10 +176,10 @@ public class RepeatPathElements
     public void UpdateSprites(GameTimer timer)
     {
         float beat = timer.beat;
-        path.style.backgroundImage = new StyleBackground(
+        path.SetBackgroundSpriteIfChanged(
             GlobalResource.noteSkin.repeatPath
             .GetSpriteAtFloatIndex(beat));
-        pathEnd.style.backgroundImage = new StyleBackground(
+        pathEnd.SetBackgroundSpriteIfChanged(
             GlobalResource.noteSkin.repeatPathEnd
             .GetSpriteAtFloatIndex(beat));
     }

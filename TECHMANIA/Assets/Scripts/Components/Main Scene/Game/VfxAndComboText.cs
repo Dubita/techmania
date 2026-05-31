@@ -244,14 +244,14 @@ public class VfxAndComboText
 
             if (judgementSpriteSheet != null)
             {
-                elements.judgement.style.backgroundImage = new StyleBackground(
+                elements.judgement.SetBackgroundSpriteIfChanged(
                     judgementSpriteSheet.GetSpriteForTime(time, loop: true));
             }
             for (int i = 0; i < elements.digits.Count; i++)
             {
                 if (elements.digits[i].style.display == DisplayStyle.Flex)
                 {
-                    elements.digits[i].style.backgroundImage = new StyleBackground(
+                    elements.digits[i].SetBackgroundSpriteIfChanged(
                         comboDigitSpriteSheet[i].GetSpriteForTime(time, loop: true));
                 }
             }
@@ -401,7 +401,7 @@ public class VfxAndComboText
                 SetCenter(center);
 
                 // Set initial sprite and material.
-                layerElement.style.backgroundImage = new StyleBackground(
+                layerElement.SetBackgroundSpriteIfChanged(
                     spriteSheet.sprites[0]);
                 if (spriteSheet.additiveShader)
                 {

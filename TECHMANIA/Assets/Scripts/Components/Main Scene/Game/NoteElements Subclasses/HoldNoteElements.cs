@@ -40,8 +40,8 @@ public class HoldNoteElements : NoteElements
 
     protected override void UpdateSprites(GameTimer timer)
     {
-        noteImage.style.backgroundImage = new UnityEngine.UIElements
-            .StyleBackground(GlobalResource.noteSkin.holdHead
+        noteImage.SetBackgroundSpriteIfChanged(
+            GlobalResource.noteSkin.holdHead
             .GetSpriteAtFloatIndex(timer.beat));
         // Trail sprites are covered by HoldTrailElements.UpdateTrails,
         // which calls HoldTrailElements.UpdateSprites.

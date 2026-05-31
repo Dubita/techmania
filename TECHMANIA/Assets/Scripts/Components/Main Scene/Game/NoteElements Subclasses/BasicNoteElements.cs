@@ -43,8 +43,7 @@ public class BasicNoteElements : NoteElements
 
     protected override void UpdateSprites(GameTimer timer)
     {
-        noteImage.style.backgroundImage = new 
-            UnityEngine.UIElements.StyleBackground(
+        noteImage.SetBackgroundSpriteIfChanged(
             GlobalResource.noteSkin.basic
             .GetSpriteAtFloatIndex(timer.beat));
     }

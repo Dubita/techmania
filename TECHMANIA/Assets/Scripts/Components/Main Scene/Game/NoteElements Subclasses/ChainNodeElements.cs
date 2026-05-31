@@ -57,11 +57,11 @@ public class ChainNodeElements : ChainElementsBase
 
     protected override void UpdateSprites(GameTimer timer)
     {
-        noteImage.style.backgroundImage = new StyleBackground(
+        noteImage.SetBackgroundSpriteIfChanged(
             GlobalResource.noteSkin.chainNode
             .GetSpriteAtFloatIndex(timer.beat));
-        pathToPreviousNote.style.backgroundImage = new
-            StyleBackground(GlobalResource.noteSkin.chainPath
+        pathToPreviousNote.SetBackgroundSpriteIfChanged(
+            GlobalResource.noteSkin.chainPath
             .GetSpriteAtFloatIndex(timer.beat));
     }
 

@@ -61,7 +61,7 @@ public class RepeatHeadElementsBase : NoteElements
 
     protected override void UpdateSprites(GameTimer timer)
     {
-        noteImage.style.backgroundImage = new StyleBackground(
+        noteImage.SetBackgroundSpriteIfChanged(
             GlobalResource.noteSkin.repeatHead
             .GetSpriteAtFloatIndex(timer.beat));
     }

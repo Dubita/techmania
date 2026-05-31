@@ -20,8 +20,7 @@ public class ChainHeadElements : ChainElementsBase
 
     protected override void UpdateSprites(GameTimer timer)
     {
-        noteImage.style.backgroundImage = new
-            UnityEngine.UIElements.StyleBackground(
+        noteImage.SetBackgroundSpriteIfChanged(
             GlobalResource.noteSkin.chainHead
             .GetSpriteAtFloatIndex(timer.beat));
     }

@@ -94,7 +94,7 @@ public class DragNoteElements : NoteElements
 
     protected override void UpdateSprites(GameTimer timer)
     {
-        noteImage.style.backgroundImage = new StyleBackground(
+        noteImage.SetBackgroundSpriteIfChanged(
             GlobalResource.noteSkin.dragHead
             .GetSpriteAtFloatIndex(timer.beat));
         curveSprite = GlobalResource.noteSkin.dragCurve

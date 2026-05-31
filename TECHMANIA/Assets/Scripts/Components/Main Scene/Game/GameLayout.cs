@@ -370,7 +370,7 @@ public class GameLayout
             float relativeScan = scan - s.scanNumber;
             PlaceElementHorizontally(s.anchor, relativeScan,
                 s.direction);
-            s.scanline.style.backgroundImage = new StyleBackground(
+            s.scanline.SetBackgroundSpriteIfChanged(
                 scanlineSprite);
             s.scanline.style.opacity = scanlineAlpha;
         }
@@ -409,13 +409,11 @@ public class GameLayout
                 else
                 {
                     elements.countdownBg.visible = true;
-                    elements.countdownBg.style.backgroundImage =
-                        new StyleBackground(
+                    elements.countdownBg.SetBackgroundSpriteIfChanged(
                             skin.scanCountdownBackground
                             .GetSpriteAtFloatIndex(progress));
                     elements.countdownNum.visible = true;
-                    elements.countdownNum.style.backgroundImage =
-                        new StyleBackground(
+                    elements.countdownNum.SetBackgroundSpriteIfChanged(
                             skin.scanCountdownNumbers
                             .GetSpriteAtFloatIndex(progress));
                 }
