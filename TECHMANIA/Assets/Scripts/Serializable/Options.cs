@@ -177,8 +177,8 @@ public class Options : OptionsBase
         musicVolumePercent = 80;
         keysoundVolumePercent = 100;
         sfxVolumePercent = 100;
-        audioBufferSize = 1024;
-        numAudioBuffers = 4;
+        audioBufferSize = 512;
+        numAudioBuffers = 2;
         useAsio = false;
 
         locale = L10n.kDefaultLocale;
@@ -357,13 +357,29 @@ public class Options : OptionsBase
 
     public static int GetDefaultAudioBufferSize()
     {
-        Debug.LogWarning("GetDefaultAudioBufferSize() is deprecated, and hardcoded to 1024.");
-        return 1024;
+        return 512;
     }
 
+    // FMOD cannot resize its DSP buffer without recreating the system
+    // (which invalidates all loaded sounds), so a buffer-size change takes
+    // effect on the next launch. This validates and persists the choice;
+    // FmodManager.Initialize reads audioBufferSize/numAudioBuffers at startup.
     public void ApplyAudioBufferSize()
     {
-        Debug.LogWarning("TECHMANIA no longer allows setting audio buffer size at runtime.");
+        audioBufferSize = Mathf.Clamp(audioBufferSize, 128, 2048);
+        numAudioBuffers = Mathf.Clamp(numAudioBuffers, 2, 8);
+        Debug.Log($"Audio buffer set to {audioBufferSize} samples x {numAudioBuffers}; applies on next launch.");
+    }
+
+    // One-tap low-latency profile, best paired with ASIO on Windows.
+    // May cause audio crackle/underruns on weaker hardware (raise the
+    // buffer if so). Applied on next launch.
+    public void ApplyLowLatencyAudioPreset()
+    {
+        useAsio = true;
+        audioBufferSize = 256;
+        numAudioBuffers = 2;
+        ApplyAudioBufferSize();
     }
 
     public void ApplyAsio()

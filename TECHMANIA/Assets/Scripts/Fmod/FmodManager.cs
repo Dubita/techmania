@@ -79,6 +79,27 @@ public class FmodManager
             // Likewise, the default real channel count is 32,
             // but we increase it to 64.
             EnsureOk(system.setSoftwareChannels(64));
+
+            // Match the mixer rate to the output device to avoid an extra
+            // resampling stage (a small latency + CPU saving). Defensive:
+            // on any error, skip and let FMOD pick its default mixer rate.
+            System.Guid driverGuid;
+            int deviceRate;
+            FMOD.SPEAKERMODE deviceSpeakerMode;
+            int deviceSpeakerChannels;
+            if (system.getDriverInfo(0, out driverGuid, out deviceRate,
+                    out deviceSpeakerMode, out deviceSpeakerChannels)
+                    == FMOD.RESULT.OK &&
+                deviceRate >= 22050 && deviceRate <= 192000)
+            {
+                FMOD.RESULT formatResult = system.setSoftwareFormat(
+                    deviceRate, FMOD.SPEAKERMODE.DEFAULT, 0);
+                if (formatResult != FMOD.RESULT.OK)
+                {
+                    Debug.LogWarning("setSoftwareFormat failed: " +
+                        formatResult + "; using FMOD default mixer rate.");
+                }
+            }
             EnsureOk(system.init(128, FMOD.INITFLAGS.NORMAL, 
                 IntPtr.Zero));
         }
