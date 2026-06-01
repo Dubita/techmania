@@ -261,6 +261,31 @@ public class FmodManager
         EnsureOk(sound.setMode(FMOD.MODE.LOOP_OFF | FMOD.MODE._2D));
         return new FmodSoundWrap(sound);
     }
+
+    // Loads a sound by decoding the file natively in FMOD, avoiding the
+    // UnityWebRequest -> AudioClip -> PCM marshal-copy round trip used by
+    // CreateSoundFromAudioClip. Only valid for real on-disk files: callers
+    // must gate on File.Exists, because in-APK StreamingAssets on Android
+    // are not real files and need the UnityWebRequest path. CREATESAMPLE
+    // fully decodes into memory (matching the old behaviour), which is best
+    // for keysounds played repeatedly with low latency.
+    public static void CreateSoundFromFile(string path,
+        out FmodSoundWrap sound, out Status status)
+    {
+        sound = null;
+        FMOD.MODE mode = FMOD.MODE.CREATESAMPLE | FMOD.MODE._2D |
+            FMOD.MODE.LOOP_OFF | FMOD.MODE.IGNORETAGS;
+        FMOD.Sound fmodSound;
+        FMOD.RESULT result = system.createSound(path, mode, out fmodSound);
+        if (result != FMOD.RESULT.OK)
+        {
+            status = Status.Error(Status.Code.OtherError,
+                result.ToString(), path);
+            return;
+        }
+        sound = new FmodSoundWrap(fmodSound);
+        status = Status.OKStatus();
+    }
     #endregion
 
     #region Debug

@@ -162,23 +162,36 @@ public class ResourceLoader : MonoBehaviour
                     yield break;
                 }
 
-                // Somehow passing in AudioType.UNKNOWN will make it
-                // magically work for every format.
-                UnityWebRequest request =
-                    UnityWebRequestMultimedia.GetAudioClip(
-                        Paths.FullPathToUri(file), AudioType.UNKNOWN);
-                yield return request.SendWebRequest();
-
                 FmodSoundWrap sound;
                 Status status;
-                GetSoundFromWebRequest(request,
-                    out sound, out status);
+                bool loadedNatively = File.Exists(file);
+                if (loadedNatively)
+                {
+                    // Decode natively in FMOD; no AudioClip round trip.
+                    FmodManager.CreateSoundFromFile(file,
+                        out sound, out status);
+                }
+                else
+                {
+                    // Fallback (e.g. in-APK StreamingAssets on Android).
+                    // Somehow passing in AudioType.UNKNOWN will make it
+                    // magically work for every format.
+                    UnityWebRequest request =
+                        UnityWebRequestMultimedia.GetAudioClip(
+                            Paths.FullPathToUri(file), AudioType.UNKNOWN);
+                    yield return request.SendWebRequest();
+                    GetSoundFromWebRequest(request,
+                        out sound, out status);
+                }
                 if (!status.Ok())
                 {
                     cacheAudioCompleteCallback?.Invoke(status);
                     yield break;
                 }
                 sounds.Add(fileRelativePath, sound);
+                // Native decode is synchronous and doesn't yield; do so here
+                // so the loading screen updates (cheap: VSync is off here).
+                if (loadedNatively) yield return null;
             }
             
             numLoaded++;
@@ -236,14 +249,23 @@ public class ResourceLoader : MonoBehaviour
             yield break;
         }
 
-        UnityWebRequest request =
-            UnityWebRequestMultimedia.GetAudioClip(
-            Paths.FullPathToUri(fullPath), AudioType.UNKNOWN);
-        yield return request.SendWebRequest();
-
         FmodSoundWrap sound;
         Status status;
-        GetSoundFromWebRequest(request, out sound, out status);
+        if (File.Exists(fullPath))
+        {
+            // Decode natively in FMOD; no AudioClip round trip.
+            FmodManager.CreateSoundFromFile(fullPath,
+                out sound, out status);
+        }
+        else
+        {
+            // Fallback (e.g. in-APK StreamingAssets on Android).
+            UnityWebRequest request =
+                UnityWebRequestMultimedia.GetAudioClip(
+                Paths.FullPathToUri(fullPath), AudioType.UNKNOWN);
+            yield return request.SendWebRequest();
+            GetSoundFromWebRequest(request, out sound, out status);
+        }
         if (sound != null)
         {
             Debug.Log("Loaded: " + fullPath);
