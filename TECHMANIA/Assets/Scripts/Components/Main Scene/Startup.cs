@@ -33,6 +33,9 @@ public class Startup : MonoBehaviour
     void Start()
     {
         Input.simulateMouseWithTouches = false;
+        // Enable EnhancedTouch so GameInputManager can read per-touch event
+        // timestamps for sub-frame tap timing under the Input System.
+        UnityEngine.InputSystem.EnhancedTouch.EnhancedTouchSupport.Enable();
         Paths.PrepareFolders();
         Options.RefreshInstance();
         Statistics.RefreshInstance();

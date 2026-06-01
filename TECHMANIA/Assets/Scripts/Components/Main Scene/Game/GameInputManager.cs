@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using ETouch = UnityEngine.InputSystem.EnhancedTouch;
+using ISTouchPhase = UnityEngine.InputSystem.TouchPhase;
 
 public enum InputDevice
 {
@@ -144,6 +146,10 @@ public class GameInputManager
     #region Update
     public void Update()
     {
+        // Capture a real-time anchor for this frame so touch events can be
+        // judged at their actual timestamp (see GameTimeOfEvent).
+        frameRealtime = Time.realtimeSinceStartupAsDouble;
+
         // Input handling gets a bit complicated so here's a graph.
         //
         // Touch/KM                Keys/KM         Timer
@@ -208,24 +214,27 @@ public class GameInputManager
         switch (scheme)
         {
             case ControlScheme.Touch:
-                for (int i = 0; i < Input.touchCount; i++)
+                // Use the Input System's EnhancedTouch so each tap is judged
+                // at its real event timestamp (t.startTime), not frame time.
+                foreach (ETouch.Touch t in ETouch.Touch.activeTouches)
                 {
-                    Touch t = Input.GetTouch(i);
+                    int finger = t.finger.index;
+                    Vector2 pos = t.screenPosition;
                     switch (t.phase)
                     {
-                        case TouchPhase.Began:
-                            OnFingerDown(t.fingerId, t.position);
+                        case ISTouchPhase.Began:
+                            OnFingerDown(finger, pos, t.startTime);
                             break;
-                        case TouchPhase.Moved:
-                            OnFingerMove(t.fingerId, t.position);
-                            OnFingerHeld(t.position);
+                        case ISTouchPhase.Moved:
+                            OnFingerMove(finger, pos, t.time);
+                            OnFingerHeld(pos);
                             break;
-                        case TouchPhase.Stationary:
-                            OnFingerHeld(t.position);
+                        case ISTouchPhase.Stationary:
+                            OnFingerHeld(pos);
                             break;
-                        case TouchPhase.Canceled:
-                        case TouchPhase.Ended:
-                            OnFingerUp(t.fingerId);
+                        case ISTouchPhase.Ended:
+                        case ISTouchPhase.Canceled:
+                            OnFingerUp(finger);
                             break;
                     }
                 }
@@ -251,13 +260,13 @@ public class GameInputManager
                     Input.GetMouseButtonDown(1) ||
                     Input.GetMouseButtonDown(2))
                 {
-                    OnFingerDown(0, Input.mousePosition);
+                    OnFingerDown(0, Input.mousePosition, frameRealtime);
                 }
                 if (Input.GetMouseButton(0) ||
                     Input.GetMouseButton(1) ||
                     Input.GetMouseButton(2))
                 {
-                    OnFingerMove(0, Input.mousePosition);
+                    OnFingerMove(0, Input.mousePosition, frameRealtime);
                     OnFingerHeld(Input.mousePosition);
                 }
                 if (Input.GetMouseButtonUp(0) ||
@@ -352,10 +361,29 @@ public class GameInputManager
         return controller.autoPlay ? 0f : latencyMs * 0.001f;
     }
 
+    // Real-time anchor for the current frame, captured at the top of
+    // Update(). Used to map an input event's timestamp to game time.
+    private double frameRealtime;
+
+    // Maps an input event's timestamp (InputSystem time base, i.e.
+    // Time.realtimeSinceStartupAsDouble) to the game time at which the
+    // event actually occurred, decoupling judgement from frame time.
+    private float GameTimeOfEvent(double eventTime)
+    {
+        double secondsAgo = frameRealtime - eventTime;
+        if (secondsAgo < 0.0) secondsAgo = 0.0;
+        return timer.gameTime - (float)(secondsAgo * timer.speed);
+    }
+
     private float TimeDifferenceForNote(Note n)
     {
+        return TimeDifferenceForNote(n, timer.gameTime);
+    }
+
+    private float TimeDifferenceForNote(Note n, float eventGameTime)
+    {
         float correctTime = n.time + LatencyForNote(n);
-        return timer.gameTime - correctTime;
+        return eventGameTime - correctTime;
     }
 
     public static Judgement TimeDifferenceToJudgement(
@@ -386,7 +414,8 @@ public class GameInputManager
     #region Finger / mouse events
     private Dictionary<int, int> fingerInLane;
 
-    private void OnFingerDown(int finger, Vector2 screenPoint)
+    private void OnFingerDown(int finger, Vector2 screenPoint,
+        double eventTime)
     {
         int lane = layout.ScreenPointToLaneNumber(screenPoint);
         if (fingerInLane.ContainsKey(finger))
@@ -397,14 +426,14 @@ public class GameInputManager
         {
             fingerInLane.Add(finger, lane);
         }
-        ProcessFingerDown(lane, screenPoint);
+        ProcessFingerDown(lane, screenPoint, eventTime);
     }
 
     // Meant for ongoing notes; doesn't care which finger.
     private void OnFingerHeld(Vector2 screenPoint)
     {
         RaycastResult raycastResult = Raycast(screenPoint,
-            prioritizeNewNote: false);
+            prioritizeNewNote: false, timer.gameTime);
         foreach (NoteElements elements in raycastResult.ongoingNotes)
         {
             if (ongoingNoteIsHitOnThisFrame.ContainsKey(elements))
@@ -416,18 +445,19 @@ public class GameInputManager
 
     // Fires additional finger down events if the finger moved
     // between lanes.
-    private void OnFingerMove(int finger, Vector2 screenPoint)
+    private void OnFingerMove(int finger, Vector2 screenPoint,
+        double eventTime)
     {
         if (!fingerInLane.ContainsKey(finger))
         {
-            OnFingerDown(finger, screenPoint);
+            OnFingerDown(finger, screenPoint, eventTime);
             return;
         }
 
         int lane = layout.ScreenPointToLaneNumber(screenPoint);
         if (fingerInLane[finger] != lane)
         {
-            ProcessFingerDown(lane, screenPoint);
+            ProcessFingerDown(lane, screenPoint, eventTime);
             fingerInLane[finger] = lane;
         }
     }
@@ -437,10 +467,11 @@ public class GameInputManager
         fingerInLane.Remove(finger);
     }
 
-    private void ProcessFingerDown(int lane, Vector2 screenPoint)
+    private void ProcessFingerDown(int lane, Vector2 screenPoint,
+        double eventTime)
     {
         RaycastResult raycastResult = Raycast(screenPoint,
-            prioritizeNewNote: true);
+            prioritizeNewNote: true, GameTimeOfEvent(eventTime));
         if (raycastResult.newNote != null)
         {
             // Hit a new note, so just process it.
@@ -479,7 +510,7 @@ public class GameInputManager
     // If !prioritizeNewNote, raycast will ignore all not-ongoing
     // notes.
     private RaycastResult Raycast(Vector2 screenPoint,
-        bool prioritizeNewNote)
+        bool prioritizeNewNote, float eventGameTime)
     {
         RaycastResult result = new RaycastResult();
         System.Action<NoteElements> raycastOnNote =
@@ -533,7 +564,7 @@ public class GameInputManager
 
             // Is the current time within the note's time window?
             float difference = TimeDifferenceForNote(
-                noteToCheck.note);
+                noteToCheck.note, eventGameTime);
             if (Mathf.Abs(difference) >
                 noteToCheck.note.timeWindow[Judgement.Miss])
             {
