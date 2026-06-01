@@ -201,11 +201,16 @@ public class Records : RecordsBase
             new Dictionary<string, Record>();
         recordDict[Options.Ruleset.Legacy] =
             new Dictionary<string, Record>();
-        setlistRecordDict = new Dictionary<Options.Ruleset, 
+        // Custom rulesets save records too (treated like official).
+        recordDict[Options.Ruleset.Custom] =
+            new Dictionary<string, Record>();
+        setlistRecordDict = new Dictionary<Options.Ruleset,
             Dictionary<string, SetlistRecord>>();
         setlistRecordDict[Options.Ruleset.Standard] =
             new Dictionary<string, SetlistRecord>();
         setlistRecordDict[Options.Ruleset.Legacy] =
+            new Dictionary<string, SetlistRecord>();
+        setlistRecordDict[Options.Ruleset.Custom] =
             new Dictionary<string, SetlistRecord>();
 
         setlist = new SetlistMethods() { parent = this };
@@ -214,10 +219,6 @@ public class Records : RecordsBase
     // Returns null if a record doesn't exist.
     public Record GetRecord(Pattern p, Options.Ruleset ruleset)
     {
-        if (ruleset == Options.Ruleset.Custom)
-        {
-            return null;
-        }
         Dictionary<string, Record> dict = recordDict[ruleset];
         if (!dict.ContainsKey(p.patternMetadata.guid))
         {
@@ -247,11 +248,6 @@ public class Records : RecordsBase
         int totalScore, PerformanceMedal medal)
     {
         p.CheckFingerprintCalculated();
-
-        if (ruleset == Options.Ruleset.Custom)
-        {
-            return;
-        }
 
         string guid = p.patternMetadata.guid;
         Record record = GetRecord(p, ruleset);
@@ -339,10 +335,6 @@ public class Records : RecordsBase
         public SetlistRecord GetRecord(Setlist s,
             Options.Ruleset ruleset)
         {
-            if (ruleset == Options.Ruleset.Custom)
-            {
-                return null;
-            }
             Dictionary<string, SetlistRecord> dict =
                 parent.setlistRecordDict[ruleset];
             if (!dict.ContainsKey(s.setlistMetadata.guid))
@@ -420,11 +412,6 @@ public class Records : RecordsBase
             Options.Ruleset ruleset,
             int totalScore, PerformanceMedal medal)
         {
-            if (ruleset == Options.Ruleset.Custom)
-            {
-                return;
-            }
-
             // Calculate the guid and fingerprint of patterns.
             List<string> patternGuids = new List<string>();
             List<string> patternFingerprints = new List<string>();
@@ -508,16 +495,16 @@ public class Records : RecordsBase
     {
         recordDict[Options.Ruleset.Standard].Clear();
         recordDict[Options.Ruleset.Legacy].Clear();
+        recordDict[Options.Ruleset.Custom].Clear();
         foreach (Record r in records)
         {
-            if (r.ruleset == Options.Ruleset.Custom) continue;
             recordDict[r.ruleset].Add(r.guid, r);
         }
         setlistRecordDict[Options.Ruleset.Standard].Clear();
         setlistRecordDict[Options.Ruleset.Legacy].Clear();
+        setlistRecordDict[Options.Ruleset.Custom].Clear();
         foreach (SetlistRecord r in setlistRecords)
         {
-            if (r.ruleset == Options.Ruleset.Custom) continue;
             setlistRecordDict[r.ruleset].Add(r.setlistGuid, r);
         }
     }

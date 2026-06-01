@@ -639,14 +639,12 @@ public class GameController : MonoBehaviour
     public bool ScoreIsValid()
     {
         return !setup.modifiers.HasAnySpecialModifier() &&
-            setup.ruleset != Options.Ruleset.Custom &&
             !scoreKeeper.stageFailed;
     }
 
     public bool SetlistScoreIsValid()
     {
         return !setup.modifiers.HasAnySpecialModifier() &&
-            setup.ruleset != Options.Ruleset.Custom &&
             !setlistScoreKeeper.stageFailed;
     }
 
