@@ -280,7 +280,9 @@ function CurrentModifiersToString(includeNoVideo)
         table.insert(allSegments, tm.l10n.GetString("modifier_no_video"))
     end
     CheckAndAddSegment("suddenDeath", false)
-    CheckAndAddSegment("mode", true)
+    -- No Fail no longer invalidates scores; AutoPlay/Practice still do.
+    CheckAndAddSegment("mode",
+        tostring(tm.options.modifiers.mode) ~= "NoFail")
     CheckAndAddSegment("controlOverride", true)
     CheckAndAddSegment("scrollSpeed", true)
 

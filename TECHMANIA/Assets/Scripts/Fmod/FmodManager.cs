@@ -71,7 +71,17 @@ public class FmodManager
             FMOD.System newCoreSystem;
             EnsureOk(FMOD.Factory.System_Create(out newCoreSystem));
             system = newCoreSystem;
-            EnsureOk(system.setDSPBufferSize((uint)bufferSize, numBuffers));
+            // Don't EnsureOk here: very small buffers (16/32/64) may be
+            // rejected by the device. Fall back to FMOD's default instead
+            // of failing startup.
+            FMOD.RESULT bufferResult = system.setDSPBufferSize(
+                (uint)bufferSize, numBuffers);
+            if (bufferResult != FMOD.RESULT.OK)
+            {
+                Debug.LogWarning($"setDSPBufferSize({bufferSize}, " +
+                    $"{numBuffers}) failed: {bufferResult}; using the FMOD " +
+                    $"default buffer. Try a larger audio buffer size.");
+            }
 
             // The default virtual channel count is 128, according
             // to FMODUnity.Platform.PropertyAccessors

@@ -366,7 +366,7 @@ public class Options : OptionsBase
     // FmodManager.Initialize reads audioBufferSize/numAudioBuffers at startup.
     public void ApplyAudioBufferSize()
     {
-        audioBufferSize = Mathf.Clamp(audioBufferSize, 128, 2048);
+        audioBufferSize = Mathf.Clamp(audioBufferSize, 16, 2048);
         numAudioBuffers = Mathf.Clamp(numAudioBuffers, 2, 8);
         Debug.Log($"Audio buffer set to {audioBufferSize} samples x {numAudioBuffers}; applies on next launch.");
     }
@@ -687,7 +687,9 @@ public class Modifiers
 
     public bool HasAnySpecialModifier()
     {
-        if (mode != Mode.Normal) return true;
+        // No Fail is allowed to save scores; only AutoPlay and Practice
+        // invalidate them.
+        if (mode == Mode.AutoPlay || mode == Mode.Practice) return true;
         if (controlOverride != ControlOverride.None) return true;
         if (scrollSpeed != ScrollSpeed.Normal) return true;
         return false;
