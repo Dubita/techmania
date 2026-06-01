@@ -63,6 +63,14 @@ public class GameTimer
 
     // BaseTime is equal to this value when the stopwatch begins.
     private float initialTime;
+
+    // Audio-clock sync (P4): drive base time from the backing track's FMOD
+    // playback position so visuals follow the audio instead of a free-running
+    // stopwatch (eliminates drift). Set kSyncToAudioClock to false to revert
+    // to pure stopwatch timing. kAudioSyncRate is the correction rate per
+    // second (higher = tighter tracking, but follows the DSP staircase more).
+    private const bool kSyncToAudioClock = true;
+    private const float kAudioSyncRate = 2f;
     #endregion
 
     #region Methods
@@ -169,14 +177,35 @@ public class GameTimer
     }
 
     [MoonSharpHidden]
-    public void Update(System.Action comboTickCallback)
+    public void Update(System.Action comboTickCallback,
+        float? audioTime = null)
     {
         prevFrameBaseTime = baseTime;
         prevFrameScan = scan;
         prevFrameIntScan = intScan;
 
-        baseTime = (float)stopwatch.Elapsed.TotalSeconds * speed
-            + initialTime;
+        float stopwatchElapsed =
+            (float)stopwatch.Elapsed.TotalSeconds * speed;
+
+        // Audio-clock sync (P4): when a backing track is playing, nudge the
+        // stopwatch offset (initialTime) toward the track's actual playback
+        // position so visuals follow the audio with no drift. The gentle
+        // exponential correction also low-pass-filters the DSP-quantized
+        // audio position, keeping motion smooth. Falls back to the pure
+        // stopwatch when no audio time is available (e.g. no backing track).
+        if (kSyncToAudioClock && audioTime.HasValue)
+        {
+            float idealInitialTime = audioTime.Value - stopwatchElapsed;
+            if (Mathf.Abs(idealInitialTime - initialTime) < 1f)
+            {
+                float lerpT = 1f - Mathf.Exp(
+                    -kAudioSyncRate * Time.unscaledDeltaTime);
+                initialTime = Mathf.Lerp(
+                    initialTime, idealInitialTime, lerpT);
+            }
+        }
+
+        baseTime = stopwatchElapsed + initialTime;
         pulse = pattern.TimeToPulse(baseTime);
         beat = pulse / Pattern.pulsesPerBeat;
         scan = pulse / pulsesPerScan;

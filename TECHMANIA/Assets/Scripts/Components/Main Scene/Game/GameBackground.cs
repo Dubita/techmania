@@ -175,6 +175,15 @@ public class GameBackground
             noteManager.ResolveNote(upcomingNote);
         }
     }
+
+    // Returns the backing track's current playback position (seconds) for
+    // audio-clock sync, or false if no backing track is currently playing.
+    public bool TryGetSyncTime(out float time)
+    {
+        time = 0f;
+        if (backingChannel == null) return false;
+        return backingChannel.TryGetTimeSeconds(out time);
+    }
     #endregion
 
     #region Seek

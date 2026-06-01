@@ -774,7 +774,13 @@ public class GameController : MonoBehaviour
         }
         else if (state.state == ThemeApi.GameState.State.Ongoing)
         {
-            timer.Update(comboTickCallback: ComboTick);
+            float? audioSyncTime = null;
+            if (bg.TryGetSyncTime(out float bgTime))
+            {
+                audioSyncTime = bgTime;
+            }
+            timer.Update(comboTickCallback: ComboTick,
+                audioTime: audioSyncTime);
             bg.Update(timer.baseTime, timer.prevFrameBaseTime);
             layout.Update(timer.scan);
             noteManager.Update(timer, scoreKeeper);

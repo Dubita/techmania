@@ -126,6 +126,29 @@ public class FmodChannelWrap
         }
     }
 
+    // Returns the playback position in seconds, or false (without logging)
+    // if the channel is no longer valid or not playing -- e.g. a non-looping
+    // backing track that has finished. Used for per-frame audio-clock sync,
+    // where EnsureOk's invalid-handle warnings would otherwise spam.
+    [MoonSharpHidden]
+    public bool TryGetTimeSeconds(out float seconds)
+    {
+        seconds = 0f;
+        bool playing;
+        if (channel.isPlaying(out playing) != FMOD.RESULT.OK || !playing)
+        {
+            return false;
+        }
+        uint positionMs;
+        if (channel.getPosition(out positionMs, FMOD.TIMEUNIT.MS)
+            != FMOD.RESULT.OK)
+        {
+            return false;
+        }
+        seconds = positionMs * 0.001f;
+        return true;
+    }
+
     public float volume
     {
         get
